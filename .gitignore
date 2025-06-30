@@ -1,0 +1,9 @@
+# Arquivo de ambiente
+.env
+
+# Pasta do banco de dados vetorial
+/vectorstore/
+
+# Caches do Python
+__pycache__/
+*.pyc

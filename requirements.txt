@@ -1,0 +1,12 @@
+streamlit
+langchain
+langchain-community
+langchain-huggingface
+langchain-openai
+sentence-transformers
+pypdf
+chromadb
+python-dotenv
+openai
+tf-keras
+chromadb
