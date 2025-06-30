@@ -1,9 +1,9 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
-from langchain_community.llms import Ollama
-from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.vectorstores import FAISS
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.prompts import PromptTemplate
 from langchain.schema.runnable import RunnablePassthrough
 from langchain.schema.output_parser import StrOutputParser
@@ -19,12 +19,13 @@ def load_chain():
     Carrega e configura a cadeia de conversação (LangChain).
     """
     # 1. Carregar o banco de dados vetorial
-    embedding_function = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    embedding_function = GoogleGenerativeAIEmbeddings(
+        model="models/embedding-001"
     )
-    vector_store = Chroma(
-        persist_directory=VECTORSTORE_PATH,
-        embedding_function=embedding_function
+    vector_store = FAISS.load_local(
+        VECTORSTORE_PATH,
+        embedding_function,
+        allow_dangerous_deserialization=True
     )
     retriever = vector_store.as_retriever()
 
@@ -46,8 +47,8 @@ def load_chain():
     """
     prompt = PromptTemplate.from_template(template)
 
-    # 3. Configurar o LLM local
-    llm = Ollama(model="llama3.2:1b", temperature=0)
+    # 3. Configurar o LLM
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0)
 
     # 4. Criar a cadeia (chain) usando LangChain Expression Language (LCEL)
     # A cadeia irá:
@@ -108,12 +109,9 @@ def main():
         st.info("📄 Envie um arquivo PDF para começar!")
         st.stop()
 
-    # Verificar se o Ollama está rodando
-    try:
-        test_llm = Ollama(model="llama3.2:1b")
-        test_llm.invoke("test")
-    except Exception:
-        st.error("Ollama não está rodando. Execute 'ollama serve' primeiro.")
+    # Verificar se a chave do Google está disponível
+    if not os.getenv("GOOGLE_API_KEY"):
+        st.error("Chave de API do Google não encontrada. Configure GOOGLE_API_KEY nos secrets.")
         st.stop()
 
     st.divider()

@@ -1,11 +1,11 @@
 import os
 import shutil
-import tempfile
+import pickle
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_community.vectorstores import FAISS
 
 # Constantes
 PDFS_PATH = "docs"
@@ -34,27 +34,19 @@ def process_pdfs():
     )
     chunks = text_splitter.split_documents(documents)
 
-    # 3. Gerar embeddings e armazenar no ChromaDB
-    embedding_function = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    # 3. Gerar embeddings usando Google
+    embedding_function = GoogleGenerativeAIEmbeddings(
+        model="models/embedding-001"
     )
-
-    # Remover banco anterior se existir
-    if os.path.exists(VECTORSTORE_PATH):
-        try:
-            shutil.rmtree(VECTORSTORE_PATH)
-        except:
-            pass
-
-    # Criar diretório se não existir
-    os.makedirs(VECTORSTORE_PATH, exist_ok=True)
 
     # Criar novo banco vetorial
-    vector_store = Chroma.from_documents(
+    vector_store = FAISS.from_documents(
         documents=chunks,
-        embedding=embedding_function,
-        persist_directory=VECTORSTORE_PATH
+        embedding=embedding_function
     )
+    
+    # Salvar o banco vetorial
+    vector_store.save_local(VECTORSTORE_PATH)
 
     return True, f"Processados {len(documents)} documentos em {len(chunks)} chunks."
 
